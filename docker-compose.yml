@@ -1,0 +1,76 @@
+services:
+  springboot-backend:
+    build: 
+      context: ./backend_springboot
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      python-backend:
+        condition: service_healthy
+      pgvector:
+        condition: service_healthy
+    environment:
+      - PYTHON_BACKEND_URL=http://python-backend:8000
+      - DB_CONNECTION_STRING=postgresql://postgres:0000@pgvector:5432/vector
+    networks:
+      - network1
+    restart: unless-stopped
+
+  python-backend:
+    build: 
+      context: ./backend_python
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      pgvector:
+        condition: service_healthy
+    environment:
+      - DB_CONNECTION_STRING=postgresql://postgres:0000@pgvector:5432/vector
+      - DATABASE_URL=postgresql://postgres:0000@pgvector:5432/vector
+      - DB_HOST=pgvector
+      - DB_NAME=vector
+      - DB_USER=postgres
+      - DB_PASSWORD=0000
+    volumes:
+      - ./backend_python:/app
+      - shared-data:/shared
+    networks:
+      - network1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  pgvector:
+    image: ankane/pgvector
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=vector
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=0000
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - network1
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+networks:
+  network1:
+    driver: bridge
+
+volumes:
+  shared-data:
+  pgdata:
