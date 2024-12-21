@@ -1,0 +1,23 @@
+.sidebar {
+  @apply bg-gray-800 text-white w-64 flex flex-col h-full fixed left-0;
+}
+
+.sidebar-header {
+  @apply p-4 flex justify-between items-center border-b border-gray-700;
+}
+
+.space-list {
+  @apply flex-1 overflow-y-auto;
+}
+
+.space-item {
+  @apply flex justify-between items-center p-3 hover:bg-gray-700 cursor-pointer transition-colors duration-200;
+}
+
+.space-menu {
+  @apply absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50;
+}
+
+.space-menu-item {
+  @apply block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100;
+}

@@ -1,4 +1,4 @@
-package ma.projet.patternai.entities;
+package ma.projet.patternai.requests;
 
 public class CodeAnalysisRequest {
     private String codeContent;

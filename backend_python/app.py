@@ -121,10 +121,43 @@ class GitHubService:
             }
 
 class VectorStoreService:
-    """Service for managing vector store operations"""
+    @staticmethod
+    def process_and_embed(code_content: str, collection_name: str, username: str, metadata: dict) -> Dict[str, Any]:
+        """Process and embed code content"""
+        try:
+            # Create text chunks
+            splitter = RecursiveCharacterTextSplitter(
+                chunk_size=200,
+                chunk_overlap=200,
+                separators=["\n\n", "\n", " ", ""]
+            )
+            chunks = splitter.split_text(code_content)
+            
+            # Get embeddings
+            embeddings_model = CustomEmbeddings()
+            embeddings = embeddings_model.embed_documents(chunks)
+            
+            # Ensure collection exists and get its UUID
+            collection_uuid = VectorStoreService.ensure_collection_exists(collection_name, username, metadata)
+            
+            # Store embeddings
+            VectorStoreService.store_embeddings(collection_uuid, chunks, embeddings, username)
+            
+            return {
+                "success": True,
+                "chunks_processed": len(chunks),
+                "collection_name": collection_name
+            }
+            
+        except Exception as e:
+            logger.error(f"Embedding error: {e}")
+            return {
+                "success": False,
+                "error": f"Embedding error: {str(e)}"
+            }
 
     @staticmethod
-    def ensure_collection_exists(collection_name: str, username: str) -> str:
+    def ensure_collection_exists(collection_name: str, username: str, metadata: dict) -> str:
         """Ensure collection exists and return its UUID"""
         conn = None
         try:
@@ -140,6 +173,11 @@ class VectorStoreService:
             
             if result:
                 collection_uuid = result[0]
+                # Update metadata if collection exists
+                cur.execute(
+                    "UPDATE langchain_pg_collection SET cmetadata = %s WHERE uuid = %s",
+                    (json.dumps(metadata), collection_uuid)
+                )
             else:
                 # Create new collection
                 collection_uuid = str(uuid.uuid4())
@@ -148,15 +186,15 @@ class VectorStoreService:
                     INSERT INTO langchain_pg_collection (name, uuid, username, cmetadata)
                     VALUES (%s, %s, %s, %s)
                     """,
-                    (collection_name, collection_uuid, username, json.dumps({'created_at': datetime.now().isoformat()}))
+                    (collection_name, collection_uuid, username, json.dumps(metadata))
                 )
-            
             conn.commit()
             return collection_uuid
             
         except Exception as e:
             if conn:
                 conn.rollback()
+            logger.error(f"Error ensuring collection exists: {e}")
             raise e
         finally:
             if conn:
@@ -177,7 +215,7 @@ class VectorStoreService:
                     """
                     INSERT INTO langchain_pg_embedding 
                     (collection_id, embedding, document, uuid, username)
-                    VALUES (%s, %s, %s, %s, %s)
+                    VALUES (%s, %s::vector, %s, %s, %s)
                     """,
                     (collection_uuid, embedding, chunk, chunk_uuid, username)
                 )
@@ -187,47 +225,77 @@ class VectorStoreService:
         except Exception as e:
             if conn:
                 conn.rollback()
+            logger.error(f"Error storing embeddings: {e}")
             raise e
+        finally:
+            if conn:
+                cur.close()
+                conn.close()
+                
+    @staticmethod
+    def delete_collection(collection_name: str, username: str) -> bool:
+        """Delete a collection and its embeddings"""
+        conn = None
+        try:
+            conn = psycopg2.connect(DB_CONFIG['connection_string'])
+            cur = conn.cursor()
+            
+            # First delete all embeddings
+            cur.execute(
+                """
+                DELETE FROM langchain_pg_embedding
+                WHERE collection_id IN (
+                    SELECT uuid FROM langchain_pg_collection
+                    WHERE name = %s AND username = %s
+                )
+                """,
+                (collection_name, username)
+            )
+            
+            # Then delete the collection
+            cur.execute(
+                "DELETE FROM langchain_pg_collection WHERE name = %s AND username = %s",
+                (collection_name, username)
+            )
+            
+            conn.commit()
+            return True
+            
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            logger.error(f"Error deleting collection: {e}")
+            return False
         finally:
             if conn:
                 cur.close()
                 conn.close()
 
     @staticmethod
-    def process_and_embed(code_content: str, collection_name: str, username: str) -> Dict[str, Any]:
-        """Process and embed code content"""
+    def get_collections_for_space(space_id: str, username: str) -> List[str]:
+        """Get all collections associated with a space"""
+        conn = None
         try:
-            # Create text chunks
-            splitter = RecursiveCharacterTextSplitter(
-                chunk_size=1000,
-                chunk_overlap=200,
-                separators=["\n\n", "\n", " ", ""]
+            conn = psycopg2.connect(DB_CONFIG['connection_string'])
+            cur = conn.cursor()
+            
+            cur.execute(
+                """
+                SELECT name FROM langchain_pg_collection
+                WHERE cmetadata->>'space_id' = %s AND username = %s
+                """,
+                (space_id, username)
             )
-            chunks = splitter.split_text(code_content)
             
-            # Get embeddings
-            embeddings_model = CustomEmbeddings()
-            embeddings = embeddings_model.embed_documents(chunks)
-            
-            # Ensure collection exists
-            collection_uuid = VectorStoreService.ensure_collection_exists(collection_name, username)
-            
-            # Store embeddings
-            VectorStoreService.store_embeddings(collection_uuid, chunks, embeddings, username)
-            
-            return {
-                "success": True,
-                "chunks_processed": len(chunks),
-                "collection_name": collection_name
-            }
+            return [row[0] for row in cur.fetchall()]
             
         except Exception as e:
-            logger.error(f"Embedding error: {e}")
-            return {
-                "success": False,
-                "error": f"Embedding error: {str(e)}"
-            }
-
+            logger.error(f"Error getting collections: {e}")
+            return []
+        finally:
+            if conn:
+                cur.close()
+                conn.close()
 
 @app.route('/api/fetch_github_code', methods=['POST'])
 def fetch_github_code():
@@ -253,7 +321,6 @@ def fetch_github_code():
 
 @app.route('/api/embed_github_code', methods=['POST'])
 def embed_github_code():
-    """Endpoint to embed GitHub code"""
     try:
         data = request.get_json()
         if not data:
@@ -261,19 +328,30 @@ def embed_github_code():
 
         repo_url = data.get('repository_url')
         github_token = data.get('github_token')
-        username = data.get('username', 'default_user')  # Get username from request
+        username = data.get('username', 'default_user')
+        space_id = data.get('space_id')
         collection_name = data.get('collection_name', f"repo_{hash(repo_url)}")
+
+        if not space_id:
+            return jsonify({"error": "Space ID is required"}), 400
 
         # First fetch the code
         fetch_result = GitHubService.fetch_files(repo_url, github_token)
         if not fetch_result['success']:
             return jsonify({"error": fetch_result['error']}), 400
 
-        # Then embed it with username
+        # Add space_id to collection metadata
+        metadata = {
+            'space_id': space_id,
+            'created_at': datetime.now().isoformat()
+        }
+
+        # Then embed it
         embed_result = VectorStoreService.process_and_embed(
             fetch_result['code_content'],
             collection_name,
-            username
+            username,
+            metadata
         )
         
         if not embed_result['success']:
@@ -284,7 +362,7 @@ def embed_github_code():
     except Exception as e:
         logger.error(f"Error embedding code: {e}")
         return jsonify({"error": str(e)}), 500
-
+    
 @app.route('/health')
 def health_check():
     """Health check endpoint"""
@@ -299,6 +377,48 @@ def health_check():
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         return jsonify({"status": "unhealthy", "error": str(e)}), 500
+    
+@app.route('/api/collections/<space_id>', methods=['DELETE'])
+def delete_space_collections(space_id):
+    """Delete all collections associated with a space"""
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        
+        if not username:
+            return jsonify({"error": "Username is required"}), 400
+            
+        collections = VectorStoreService.get_collections_for_space(space_id, username)
+        
+        for collection_name in collections:
+            VectorStoreService.delete_collection(collection_name, username)
+            
+        return jsonify({"message": "Collections deleted successfully"}), 200
+        
+    except Exception as e:
+        logger.error(f"Error deleting collections: {e}")
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/collections/<collection_name>', methods=['DELETE'])
+def delete_collection(collection_name):
+    """Delete a specific collection"""
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        
+        if not username:
+            return jsonify({"error": "Username is required"}), 400
+            
+        success = VectorStoreService.delete_collection(collection_name, username)
+        
+        if success:
+            return jsonify({"message": "Collection deleted successfully"}), 200
+        else:
+            return jsonify({"error": "Failed to delete collection"}), 500
+            
+    except Exception as e:
+        logger.error(f"Error deleting collection: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     # Required environment variables check

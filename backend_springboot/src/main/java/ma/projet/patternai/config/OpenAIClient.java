@@ -45,7 +45,9 @@ public class OpenAIClient {
             requestBody.put("messages", Arrays.asList(
                     Map.of(
                             "role", "system",
-                            "content", "You are a design pattern expert. Provide detailed explanations and examples."
+                            "content", "You are a design pattern expert. Provide clear, concise, and contextually appropriate responses. " +
+                                    "If the user greets you, welcome them and ask how you can help with design patterns. " +
+                                    "Keep responses focused on what was specifically asked."
                     ),
                     Map.of("role", "user", "content", prompt)
             ));

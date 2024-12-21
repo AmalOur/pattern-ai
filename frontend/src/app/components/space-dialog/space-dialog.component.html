@@ -1,0 +1,19 @@
+<div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+  <div class="bg-white rounded-lg p-6 max-w-md w-full">
+    <h2 class="text-lg font-medium mb-4">Create New Space</h2>
+    <form [formGroup]="spaceForm" (ngSubmit)="onSubmit()">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Space Name</label>
+        <input type="text" formControlName="name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+      </div>
+      <div class="mt-6 flex justify-end space-x-3">
+        <button type="button" (click)="close()" class="px-4 py-2 border rounded-md">
+          Cancel
+        </button>
+        <button type="submit" [disabled]="!spaceForm.valid" class="px-4 py-2 bg-blue-600 text-white rounded-md">
+          Create
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

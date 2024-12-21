@@ -1,0 +1,84 @@
+<div class="flex h-screen">
+  <!-- Spaces Sidebar -->
+  <div class="w-64 bg-gray-800 text-white p-4">
+    <h2 class="text-xl font-semibold mb-4">Spaces</h2>
+    <div class="space-y-2">
+      <div
+        *ngFor="let space of spaces"
+        [class.bg-blue-600]="currentSpace?.id === space.id"
+        class="p-2 rounded cursor-pointer"
+        [class.hover:bg-gray-700]="currentSpace?.id !== space.id"
+        (click)="onSpaceSelected(space)"
+      >
+        {{ space.name }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Area -->
+  <div class="flex-1 flex flex-col">
+    <!-- Loading Indicator -->
+    <div *ngIf="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="bg-red-50 text-red-700 p-4 text-sm">
+      {{ errorMessage }}
+      <button (click)="errorMessage = ''" class="float-right">&times;</button>
+    </div>
+
+    <!-- Messages Container -->
+    <div #messagesContainer class="flex-1 overflow-y-auto p-4 space-y-4">
+      <div *ngFor="let msg of messages" 
+           [class.justify-end]="isUserMessage(msg)"
+           [class.justify-start]="!isUserMessage(msg)"
+           class="flex">
+        <div [class.bg-blue-600]="isUserMessage(msg)"
+             [class.text-white]="isUserMessage(msg)"
+             [class.bg-gray-200]="!isUserMessage(msg)"
+             class="max-w-[70%] rounded-lg px-4 py-2">
+          {{ msg.message }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages Container -->
+    <div class="p-4 border-t">
+      <div class="flex space-x-4">
+        <input
+          type="text"
+          [(ngModel)]="message"
+          (keyup.enter)="sendMessage()"
+          [disabled]="!currentSpace || isLoading"
+          placeholder="Type your message..."
+          class="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          (click)="sendMessage()"
+          [disabled]="!currentSpace || !message.trim() || isLoading"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center"
+        >
+          Send
+        </button>
+        <button
+          (click)="openRepoDialog()"
+          [disabled]="!currentSpace || isLoading"
+          class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          title="Analyze Repository"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Repository Dialog -->
+    <app-repo-dialog
+      *ngIf="showRepoDialog"
+      (submitted)="analyzeRepo($event)"
+      (closed)="showRepoDialog = false"
+    />
+  </div>
+</div>

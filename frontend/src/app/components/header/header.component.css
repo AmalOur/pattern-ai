@@ -1,0 +1,23 @@
+.header {
+  @apply bg-white border-b border-gray-200 fixed w-full top-0 z-50;
+}
+
+.header-content {
+  @apply flex justify-between items-center px-4 py-2;
+}
+
+.user-menu {
+  @apply relative;
+}
+
+.user-button {
+  @apply flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 transition-colors duration-200;
+}
+
+.user-avatar {
+  @apply w-8 h-8 rounded-full object-cover;
+}
+
+.dropdown-menu {
+  @apply absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50;
+}

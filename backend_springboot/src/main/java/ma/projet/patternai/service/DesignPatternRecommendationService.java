@@ -1,13 +1,18 @@
 package ma.projet.patternai.service;
 
 import ma.projet.patternai.entities.DesignPatternRecommendation;
+import ma.projet.patternai.requests.CodeAnalysisRequest;
 import ma.projet.patternai.config.OpenAIClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.regex.Matcher;
@@ -17,94 +22,184 @@ import java.util.regex.Pattern;
 public class DesignPatternRecommendationService {
     private static final Logger logger = LoggerFactory.getLogger(DesignPatternRecommendationService.class);
 
+    @Value("${app.python-service.url:http://localhost:8000}")
+    private String pythonServiceUrl;
+
     @Autowired
     private OpenAIClient openAiClient;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private RestTemplate restTemplate;
 
-    public List<DesignPatternRecommendation> recommendDesignPatterns(String codeContent) {
+    @Transactional
+    public List<DesignPatternRecommendation> analyzeAndStoreCode(
+            UUID spaceId,
+            CodeAnalysisRequest request,
+            String userEmail
+    ) {
         try {
-            // Generate the analysis prompt
-            String prompt = generateAnalysisPrompt(codeContent);
+            logger.debug("Starting code analysis for space: {} and repo: {}",
+                    spaceId, request.getRepositoryUrl());
 
-            // Get recommendations from OpenAI
+            // First, store code in vector store through Python service
+            String collectionName = storeCodeInVectorStore(spaceId, request, userEmail);
+            logger.debug("Code stored successfully in collection: {}", collectionName);
+
+            // Generate recommendations
+            String prompt = generateAnalysisPrompt(request.getCodeContent());
             Map<String, Object> aiResponse = openAiClient.generateCompletion(prompt);
             String fullResponse = (String) aiResponse.get("full_response");
 
-            // Parse and validate recommendations
             return parseRecommendations(fullResponse);
-
         } catch (Exception e) {
-            logger.error("Error getting design pattern recommendations: ", e);
+            logger.error("Error analyzing code: ", e);
             throw new RuntimeException("Failed to analyze code: " + e.getMessage());
+        }
+    }
+
+    private String storeCodeInVectorStore(
+            UUID spaceId,
+            CodeAnalysisRequest request,
+            String userEmail
+    ) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        String collectionName = request.getRepositoryUrl();
+
+        // Create metadata correctly
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("space_id", spaceId.toString());
+        metadata.put("created_at", LocalDateTime.now().toString());
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("repository_url", request.getRepositoryUrl());
+        requestBody.put("repo_url", request.getRepositoryUrl());  // Add this line
+        requestBody.put("github_token", request.getGithubToken());
+        requestBody.put("username", userEmail);
+        requestBody.put("space_id", spaceId.toString());
+        requestBody.put("collection_name", collectionName);
+        requestBody.put("cmetadata", metadata);  // Changed from metadata to cmetadata to match Python's expectation
+
+        HttpEntity<Map<String, Object>> httpRequest = new HttpEntity<>(requestBody, headers);
+
+        try {
+            logger.debug("Sending request to Python service for repo: {} with metadata: {}",
+                    request.getRepositoryUrl(), metadata);
+
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                    pythonServiceUrl + "/api/embed_github_code",
+                    httpRequest,
+                    Map.class
+            );
+
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                logger.error("Failed response from Python service: {}", response.getBody());
+                throw new RuntimeException("Failed to store code in vector store: " + response.getBody());
+            }
+
+            return collectionName;
+        } catch (Exception e) {
+            logger.error("Error storing code in vector store: {} - {}",
+                    request.getRepositoryUrl(), e.getMessage());
+            throw new RuntimeException("Failed to store code: " + e.getMessage());
         }
     }
 
     private String generateAnalysisPrompt(String codeContent) {
         return String.format("""
-            Act as an expert software architect specializing in design patterns. Analyze the following code and recommend appropriate design patterns.
-
-            CODE TO ANALYZE:
+            Act as an expert software architect specializing in design patterns. 
+            Analyze this code and recommend appropriate design patterns:
+            
             ```
             %s
             ```
-
-            INSTRUCTIONS:
-            1. Identify design patterns that could improve this code
-            2. For each pattern, explain specifically how it would benefit this code
-            3. Provide a confidence score (0-1) for each recommendation
-            4. Format each recommendation as: PatternName | Detailed explanation of benefit | ConfidenceScore
-            5. Focus on the most relevant patterns (maximum 5)
-            6. Consider:
-               - Code structure and relationships
-               - Potential maintenance issues
-               - Flexibility and extensibility needs
-               - Current anti-patterns or code smells
-
-            EXAMPLE OUTPUT FORMAT:
-            Strategy | Could improve the payment processing logic by making payment methods interchangeable | 0.9
-            Observer | Would help decouple the notification system from core business logic | 0.85
+            
+            Please provide your recommendations in this exact format:
+            PatternName | Detailed explanation of how it improves this specific code | Confidence (0-1)
+            
+            Focus on:
+            1. The patterns that would most benefit this code
+            2. Code structure and relationships
+            3. Maintainability and extensibility
+            4. Current architecture and potential improvements
+            5. Specific implementation details
+            
+            Limit to the 5 most relevant patterns. Be specific about how each pattern 
+            would improve THIS code, not just general pattern descriptions.
+            
+            For each pattern, explain:
+            - Why this pattern is appropriate for this specific code
+            - How to implement it in this context
+            - What specific problems it solves
+            - Expected benefits after implementation
             """, codeContent);
     }
 
     private List<DesignPatternRecommendation> parseRecommendations(String aiResponse) {
         List<DesignPatternRecommendation> recommendations = new ArrayList<>();
-
-        // Split response into lines and process each recommendation
-        String[] lines = aiResponse.split("\n");
         Pattern pattern = Pattern.compile("([^|]+)\\|([^|]+)\\|([0-9.]+)");
 
-        for (String line : lines) {
-            try {
-                Matcher matcher = pattern.matcher(line.trim());
-                if (matcher.find()) {
-                    String patternName = matcher.group(1).trim();
-                    String explanation = matcher.group(2).trim();
-                    double confidence = Double.parseDouble(matcher.group(3).trim());
+        Arrays.stream(aiResponse.split("\n"))
+                .map(String::trim)
+                .filter(line -> !line.isEmpty() && line.contains("|"))
+                .forEach(line -> {
+                    try {
+                        Matcher matcher = pattern.matcher(line);
+                        if (matcher.find()) {
+                            String patternName = matcher.group(1).trim();
+                            String explanation = matcher.group(2).trim();
+                            double confidence = Double.parseDouble(matcher.group(3).trim());
 
-                    // Validate the confidence score
-                    if (confidence >= 0 && confidence <= 1) {
-                        recommendations.add(new DesignPatternRecommendation(
-                                patternName,
-                                explanation,
-                                confidence
-                        ));
+                            if (confidence >= 0 && confidence <= 1) {
+                                recommendations.add(new DesignPatternRecommendation(
+                                        patternName,
+                                        explanation,
+                                        confidence
+                                ));
+                            }
+                        }
+                    } catch (Exception e) {
+                        logger.warn("Failed to parse recommendation line: {} - {}",
+                                line, e.getMessage());
                     }
-                }
-            } catch (Exception e) {
-                logger.warn("Failed to parse recommendation line: " + line, e);
-                // Continue processing other lines
-            }
-        }
-        // Limit to top 5 recommendations
+                });
+
         return recommendations.stream()
+                .sorted(Comparator.comparingDouble(DesignPatternRecommendation::getConfidenceScore).reversed())
                 .limit(5)
                 .collect(Collectors.toList());
     }
 
     public Map<String, Object> getDetailedAnalysis(String codeContent) {
         try {
-            String detailedPrompt = generateDetailedAnalysisPrompt(codeContent);
+            String detailedPrompt = String.format("""
+                Perform a detailed design pattern analysis of this code:
+                
+                ```
+                %s
+                ```
+                
+                Provide your analysis in these sections:
+                1. Identified Patterns (format: PatternName | Justification | ConfidenceScore)
+                2. Code Structure Analysis:
+                   - Architecture overview
+                   - Component relationships
+                   - Design strengths and weaknesses
+                3. Improvement Recommendations:
+                   - Pattern implementation suggestions
+                   - Code restructuring recommendations
+                   - Best practices to adopt
+                4. Implementation Guidelines:
+                   - Step-by-step refactoring suggestions
+                   - Code examples where appropriate
+                5. Related Patterns:
+                   - Alternative patterns to consider
+                   - Complementary patterns
+                
+                Focus on practical, implementation-specific recommendations that 
+                directly relate to the provided code.
+                """, codeContent);
+
             Map<String, Object> aiResponse = openAiClient.generateCompletion(detailedPrompt);
 
             Map<String, Object> analysis = new HashMap<>();
@@ -118,25 +213,5 @@ public class DesignPatternRecommendationService {
             logger.error("Error getting detailed analysis: ", e);
             throw new RuntimeException("Failed to generate detailed analysis: " + e.getMessage());
         }
-    }
-
-    private String generateDetailedAnalysisPrompt(String codeContent) {
-        return String.format("""
-            Perform a detailed design pattern analysis of the following code.
-            
-            CODE:
-            ```
-            %s
-            ```
-            
-            Please provide:
-            1. Identified Design Patterns (format: PatternName | Justification | ConfidenceScore)
-            2. Code Structure Analysis
-            3. Potential Improvements
-            4. Implementation Suggestions
-            5. Related Patterns to Consider
-            
-            Be specific and provide practical examples where possible.
-            """, codeContent);
     }
 }

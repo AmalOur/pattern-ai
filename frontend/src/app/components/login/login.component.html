@@ -1,0 +1,64 @@
+<div class="auth-page">
+  <div class="split-container">
+    <div class="form-side">
+      <div class="form-container" @pageAnimation>
+
+        <div class="welcome-text">
+          <h1>Welcome back</h1>
+          <p>Please enter your credentials to access your account</p>
+        </div>
+
+        <app-message *ngIf="errorMessage" [message]="errorMessage" type="error"></app-message>
+        <app-message *ngIf="successMessage" [message]="successMessage" type="success"></app-message>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <div class="input-container">
+              <input 
+                type="email" 
+                formControlName="email" 
+                placeholder="Email address"
+                [class.invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+              >
+            </div>
+            <div class="error-message" *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+              Please enter a valid email
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="input-container">
+              <input 
+                type="password" 
+                formControlName="motdepasse" 
+                placeholder="Password"
+                [class.invalid]="loginForm.get('motdepasse')?.invalid && loginForm.get('motdepasse')?.touched"
+              >
+            </div>
+            <div class="error-message" *ngIf="loginForm.get('motdepasse')?.invalid && loginForm.get('motdepasse')?.touched">
+              Password must be at least 6 characters
+            </div>
+          </div>
+
+          <button type="submit" [disabled]="loginForm.invalid">
+            Login
+          </button>
+        </form>
+
+        <div class="alt-action">
+          Don't have an account? <a (click)="goToSignup()">Sign up</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="illustration-side">
+      <img src="assets/login.jpg" alt="Pattern AI" class="side-image">
+      <div class="overlay">
+        <div class="illustration-content">
+          <h2>Welcome to Pattern AI</h2>
+          <p>Discover the power of AI-driven design patterns to enhance your development workflow</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

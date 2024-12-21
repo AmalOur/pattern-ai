@@ -1,0 +1,92 @@
+<div class="auth-page">
+  <div class="split-container">
+    <div class="form-side">
+      <div class="form-container" @pageAnimation>
+
+        <div class="welcome-text">
+          <h1>Create Account</h1>
+          <p>Join Pattern AI to explore AI-powered design patterns</p>
+        </div>
+
+        <app-message *ngIf="errorMessage" [message]="errorMessage" type="error"></app-message>
+        <app-message *ngIf="successMessage" [message]="successMessage" type="success"></app-message>
+
+        <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <div class="input-container">
+              <input 
+                type="text" 
+                formControlName="nom" 
+                placeholder="Full Name"
+                [class.invalid]="signupForm.get('nom')?.invalid && signupForm.get('nom')?.touched"
+              >
+            </div>
+            <div class="error-message" *ngIf="signupForm.get('nom')?.invalid && signupForm.get('nom')?.touched">
+              Name must be at least 2 characters
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="input-container">
+              <input 
+                type="email" 
+                formControlName="email" 
+                placeholder="Email address"
+                [class.invalid]="signupForm.get('email')?.invalid && signupForm.get('email')?.touched"
+              >
+            </div>
+            <div class="error-message" *ngIf="signupForm.get('email')?.invalid && signupForm.get('email')?.touched">
+              Please enter a valid email
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="input-container">
+              <input 
+                type="password" 
+                formControlName="motdepasse" 
+                placeholder="Password"
+                [class.invalid]="signupForm.get('motdepasse')?.invalid && signupForm.get('motdepasse')?.touched"
+              >
+            </div>
+            <div class="error-message" *ngIf="signupForm.get('motdepasse')?.invalid && signupForm.get('motdepasse')?.touched">
+              Password must be at least 6 characters
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="input-container">
+              <input 
+                type="password" 
+                formControlName="confirmPassword" 
+                placeholder="Confirm Password"
+                [class.invalid]="signupForm.get('confirmPassword')?.invalid && signupForm.get('confirmPassword')?.touched"
+              >
+            </div>
+            <div class="error-message" *ngIf="signupForm.errors?.['passwordMismatch'] && signupForm.get('confirmPassword')?.touched">
+              Passwords do not match
+            </div>
+          </div>
+
+          <button type="submit" [disabled]="signupForm.invalid">
+            Create Account
+          </button>
+        </form>
+
+        <div class="alt-action">
+          Already have an account? <a (click)="goToLogin()">Login</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="illustration-side">
+      <img src="assets/signup.jpg" alt="Pattern AI" class="side-image">
+      <div class="overlay">
+        <div class="illustration-content">
+          <h2>Join Pattern AI</h2>
+          <p>Start your journey with AI-powered design patterns and elevate your development experience</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

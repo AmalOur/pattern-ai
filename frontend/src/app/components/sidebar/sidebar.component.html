@@ -1,0 +1,32 @@
+<div class="h-full bg-gray-800 text-white w-64 p-4">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-xl font-semibold">Spaces</h2>
+    <button (click)="createNewSpace()" class="p-2 bg-blue-600 rounded-full">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+      </svg>
+    </button>
+  </div>
+  <div class="space-y-2">
+    <div *ngFor="let space of spaces" class="relative">
+      <div class="flex justify-between items-center p-2 hover:bg-gray-700 rounded cursor-pointer"
+           (click)="onSpaceSelect(space)">
+        <span>{{ space.name }}</span>
+        <button (click)="toggleSpaceMenu(space); $event.stopPropagation()"
+                class="p-1 hover:bg-gray-600 rounded">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+          </svg>
+        </button>
+      </div>
+      <div *ngIf="space.isMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
+        <button (click)="viewCode(space)" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+          View Code
+        </button>
+        <button (click)="onSpaceDelete(space.id)" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+          Delete Space
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
