@@ -60,7 +60,7 @@ export class MessageComponent {
   constructor(private sanitizer: DomSanitizer) {}
 
   get isUser(): boolean {
-    return this.message.messageType === 'USER';
+    return this.message.message.startsWith('User:');
   }
 
   get messageClasses(): string {
@@ -84,38 +84,21 @@ export class MessageComponent {
   }
 
   get formattedMessage(): SafeHtml {
-    const formatted = this.formatMessage(this.message.message);
+    let text = this.message.message;
+    text = text.replace(/^(User:|Assistant:)\s*/, '');
+    const formatted = this.formatMessage(text);
     return this.sanitizer.sanitize(SecurityContext.HTML, formatted) ?? '';
   }
 
   private formatMessage(text: string): string {
     if (!text) return '';
-
-    // Replace code blocks with proper HTML
-    text = text.replace(/```([\s\S]*?)```/g, (match, code) => {
-      return `<pre><code>${this.escapeHtml(code.trim())}</code></pre>`;
-    });
     
-    // Replace inline code with proper HTML
-    text = text.replace(/`([^`]+)`/g, (match, code) => {
-      return `<code>${this.escapeHtml(code)}</code>`;
-    });
+    // Handle code blocks
+    text = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
     
-    // Convert line breaks while preserving paragraphs
-    text = text.replace(/\n\n+/g, '</p><p>');
+    // Handle line breaks
     text = text.replace(/\n/g, '<br>');
     
-    // Wrap in paragraphs if not already
-    if (!text.startsWith('<p>')) {
-      text = '<p>' + text + '</p>';
-    }
-    
     return text;
-  }
-
-  private escapeHtml(text: string): string {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
   }
 }

@@ -8,15 +8,19 @@ export interface Discussion {
   id: string;
   message: string;
   createdAt: Date;
-  messageType: 'USER' | 'ASSISTANT';
+  messageType: string;
+  space?: Space;
 }
 
 export interface ChatResponse {
-  message: Discussion;
-  context?: {
-    total_tokens?: number;
-    completion_tokens?: number;
-    prompt_tokens?: number;
+  userMessage: Discussion;
+  assistantMessage: Discussion;
+  full_response: string;
+  codeFound: boolean;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
   };
 }
 

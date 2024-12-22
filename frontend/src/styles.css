@@ -7,3 +7,37 @@ html, body {
   margin: 0;
   font-family: 'Inter', sans-serif;
 }
+
+/* Add to your global styles.css */
+.page-transition-container {
+  position: relative;
+  min-height: 100vh;
+}
+
+.page {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transition: opacity 300ms ease-in-out;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+}
+
+/* Ensure smooth animations */
+* {
+  transition-property: none;
+}
+
+.animate * {
+  transition-property: all;
+}
+
+/* Prevent flickering during animations */
+.page-container {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}

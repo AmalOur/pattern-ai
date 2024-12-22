@@ -10,23 +10,24 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
   styleUrls: ['./space-dialog.component.css']
 })
 export class SpaceDialogComponent {
-  @Output() submitted = new EventEmitter<string>();
+  @Output() submitted = new EventEmitter<{name: string}>();
   @Output() closed = new EventEmitter<void>();
+
   spaceForm: FormGroup;
 
   constructor(private fb: FormBuilder) {
     this.spaceForm = this.fb.group({
-      name: ['', Validators.required]
+      name: ['', [Validators.required, Validators.minLength(3)]]
     });
   }
 
   onSubmit() {
     if (this.spaceForm.valid) {
-      this.submitted.emit(this.spaceForm.get('name')?.value);
+      this.submitted.emit(this.spaceForm.value);
     }
   }
 
-  close() {
+  onClose() {
     this.closed.emit();
   }
 }

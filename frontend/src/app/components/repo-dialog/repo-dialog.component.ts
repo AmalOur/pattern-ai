@@ -1,5 +1,5 @@
 // src/app/components/repo-dialog/repo-dialog.component.ts
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RepositoryAnalysisRequest } from '../../models/repository.model';
@@ -54,6 +54,7 @@ import { RepositoryAnalysisRequest } from '../../models/repository.model';
   `
 })
 export class RepoDialogComponent {
+  @Input() isAnalyzing = false;
   @Output() submitted = new EventEmitter<RepositoryAnalysisRequest>();
   @Output() closed = new EventEmitter<void>();
   
@@ -71,8 +72,8 @@ export class RepoDialogComponent {
       const formValue = this.repoForm.value;
       // Map form values to the expected request format
       const request = {
-        repository_url: formValue.repoUrl,
-        github_token: formValue.token
+        repositoryUrl: formValue.repoUrl,
+        githubToken: formValue.token
       };
       console.log('Submitting repository analysis request:', { ...request, github_token: '****' });
       this.submitted.emit(request);
@@ -80,6 +81,9 @@ export class RepoDialogComponent {
   }
 
   close() {
-    this.closed.emit();
+    if (!this.isAnalyzing) {
+      this.repoForm.reset();
+      this.closed.emit();
+    }
   }
 }

@@ -1,7 +1,7 @@
 // src/app/models/repository.model.ts
 export interface RepositoryAnalysisRequest {
-    repository_url: string;
-    github_token: string;
+    repositoryUrl: string;
+    githubToken: string;
 }
   
 export interface RepositoryAnalysisResponse {
