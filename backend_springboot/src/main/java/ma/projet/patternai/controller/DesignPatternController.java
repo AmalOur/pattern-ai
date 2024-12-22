@@ -24,9 +24,6 @@ public class DesignPatternController {
     @Autowired
     private DesignPatternRecommendationService recommendationService;
 
-    @Autowired
-    private LangchainService langchainService;
-
     @PostMapping("/analyze")
     public ResponseEntity<?> analyzeCode(
             @PathVariable UUID spaceId,
@@ -39,22 +36,6 @@ public class DesignPatternController {
             return ResponseEntity.ok(recommendations);
         } catch (Exception e) {
             logger.error("Error analyzing code: ", e);
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", e.getMessage()));
-        }
-    }
-
-    @DeleteMapping("/collections/{collectionId}")
-    public ResponseEntity<?> deleteProcessedCode(
-            @PathVariable UUID spaceId,
-            @PathVariable UUID collectionId,
-            Authentication auth
-    ) {
-        try {
-            langchainService.deleteCollection(spaceId, collectionId, auth.getName());
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            logger.error("Error deleting collection: ", e);
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", e.getMessage()));
         }

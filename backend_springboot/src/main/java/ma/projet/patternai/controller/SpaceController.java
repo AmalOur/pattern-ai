@@ -1,6 +1,8 @@
 package ma.projet.patternai.controller;
 
+import ma.projet.patternai.entities.LangchainCollection;
 import ma.projet.patternai.entities.Space;
+import ma.projet.patternai.service.ProcessedCodeService;
 import ma.projet.patternai.service.SpaceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +21,9 @@ public class SpaceController {
 
     @Autowired
     private SpaceService spaceService;
+
+    @Autowired
+    private ProcessedCodeService processedCodeService;
 
     @GetMapping
     public ResponseEntity<List<Space>> getUserSpaces(Authentication auth) {
@@ -40,5 +45,39 @@ public class SpaceController {
         logger.debug("Deleting space {} for user: {}", spaceId, userEmail);
         spaceService.deleteSpace(spaceId, userEmail);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{spaceId}/collections")
+    public ResponseEntity<List<LangchainCollection>> getSpaceProcessedCodes(
+            @PathVariable UUID spaceId,
+            Authentication auth
+    ) {
+        try {
+            String userEmail = auth.getName();
+            logger.debug("Fetching processed code for space: {} and user: {}", spaceId, userEmail);
+            List<LangchainCollection> processedCodes = processedCodeService.getSpaceProcessedCodes(spaceId, userEmail);
+            return ResponseEntity.ok(processedCodes);
+        } catch (Exception e) {
+            logger.error("Error fetching processed code: ", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @DeleteMapping("/{spaceId}/collections/{collectionId}")
+    public ResponseEntity<?> deleteProcessedCode(
+            @PathVariable UUID spaceId,
+            @PathVariable UUID collectionId,
+            Authentication auth
+    ) {
+        try {
+            String userEmail = auth.getName();
+            logger.debug("Deleting processed code {} from space {} for user: {}",
+                    collectionId, spaceId, userEmail);
+            processedCodeService.deleteProcessedCode(spaceId, collectionId, userEmail);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("Error deleting processed code: ", e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

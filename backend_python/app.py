@@ -179,14 +179,15 @@ class VectorStoreService:
                     (json.dumps(metadata), collection_uuid)
                 )
             else:
-                # Create new collection
+                # Create new collection with created_at timestamp
                 collection_uuid = str(uuid.uuid4())
                 cur.execute(
                     """
-                    INSERT INTO langchain_pg_collection (name, uuid, username, cmetadata)
-                    VALUES (%s, %s, %s, %s)
+                    INSERT INTO langchain_pg_collection 
+                    (name, uuid, username, cmetadata, created_at, repo_url)
+                    VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
                     """,
-                    (collection_name, collection_uuid, username, json.dumps(metadata))
+                    (collection_name, collection_uuid, username, json.dumps(metadata), collection_name)
                 )
             conn.commit()
             return collection_uuid

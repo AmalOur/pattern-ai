@@ -6,6 +6,8 @@ import ma.projet.patternai.repo.UserRepository;
 import ma.projet.patternai.requests.LoginRequest;
 import ma.projet.patternai.requests.SignupRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,20 +52,28 @@ public class AuthController {
 
     // Login Endpoint
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody LoginRequest request) {
-        Map<String, String> response = new HashMap<>();
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        Map<String, Object> response = new HashMap<>();
 
         // Find the user by email
-        Optional<User> user = userRepository.findByEmail(request.getEmail());
-        if (user.isEmpty() || !passwordEncoder.matches(request.getMotdepasse(), user.get().getMotdepasse())) {
+        Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+        if (userOpt.isEmpty() || !passwordEncoder.matches(request.getMotdepasse(), userOpt.get().getMotdepasse())) {
             response.put("message", "Invalid email or password.");
-            return response;
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
 
-        // Generate JWT Token
-        String token = jwtUtil.generateToken(user.get().getEmail());
+        User user = userOpt.get();
+        String token = jwtUtil.generateToken(user.getEmail());
+
+        // Add user details to response
+        Map<String, String> userDetails = new HashMap<>();
+        userDetails.put("email", user.getEmail());
+        userDetails.put("nom", user.getNom());
+
         response.put("message", "Login successful.");
         response.put("token", token);
-        return response;
+        response.put("user", userDetails);
+
+        return ResponseEntity.ok(response);
     }
 }
