@@ -55,7 +55,6 @@
           <div class="relative">
             <textarea
               #messageTextarea
-              (keydown.enter)="handleEnterKey($event)"
               [(ngModel)]="message"
               (input)="autoGrow($event)"
               [disabled]="!currentSpace || isLoading"

@@ -1,4 +1,22 @@
 services:
+  frontend:
+    build:
+      context: ./frontend 
+      dockerfile: Dockerfile
+    ports:
+      - "4200:4200"
+    depends_on:
+      - springboot-backend
+    networks:
+      - network1
+    volumes:
+      - ./frontend:/app 
+      - /app/node_modules  
+    environment:
+      - NODE_ENV=development
+      - BACKEND_API_URL=http://springboot-backend:8080
+    restart: unless-stopped
+
   springboot-backend:
     build: 
       context: ./backend_springboot

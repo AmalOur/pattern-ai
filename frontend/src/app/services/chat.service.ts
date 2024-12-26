@@ -13,7 +13,7 @@ export interface Message {
   providedIn: 'root'
 })
 export class ChatService {
-  private apiUrl = 'http://localhost:8080/api/spaces';
+  private apiUrl = 'http://springboot-backend:8080/api/spaces';
 
   constructor(private http: HttpClient) {}
 

@@ -308,7 +308,7 @@ export class ChatComponent implements OnInit {
     textarea.style.height = textarea.scrollHeight + 'px';
   }
   
-  handleEnterKey(event: KeyboardEvent) {
+  handleEnterKey(event: KeyboardEvent): void {
     if (!event.shiftKey) {
       event.preventDefault();
       this.sendMessage();
