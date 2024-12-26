@@ -8,50 +8,8 @@ import { RepositoryAnalysisRequest } from '../../models/repository.model';
   selector: 'app-repo-dialog',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  template: `
-    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-md w-full">
-        <h2 class="text-xl font-semibold mb-4">Add GitHub Repository</h2>
-        <form [formGroup]="repoForm" (ngSubmit)="onSubmit()">
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Repository URL</label>
-              <input
-                type="text"
-                formControlName="repoUrl"
-                class="mt-1 block w-full rounded-md border-gray-300"
-                placeholder="https://github.com/username/repo"
-              >
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">GitHub Token</label>
-              <input
-                type="password"
-                formControlName="token"
-                class="mt-1 block w-full rounded-md border-gray-300"
-              >
-            </div>
-          </div>
-          <div class="mt-6 flex justify-end space-x-3">
-            <button
-              type="button"
-              (click)="close()"
-              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              [disabled]="!repoForm.valid"
-              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md"
-            >
-              Analyze
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  `
+  templateUrl: './repo-dialog.component.html',
+  styleUrls: ['./repo-dialog.component.css'],
 })
 export class RepoDialogComponent {
   @Input() isAnalyzing = false;

@@ -1,3 +1,4 @@
+// message.component.ts
 import { Component, Input, SecurityContext } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -7,55 +8,13 @@ import { Discussion } from '../../models/space.model';
   selector: 'app-message',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div [ngClass]="messageClasses">
-      <div [class]="bubbleClasses">
-        <div [class]="senderClasses">
-          {{ isUser ? 'You' : 'Assistant' }}
-          <span class="text-xs ml-2">{{ message.createdAt | date:'short' }}</span>
-        </div>
-        <div 
-          class="prose prose-slate max-w-none"
-          [innerHTML]="formattedMessage"
-        ></div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    :host {
-      display: block;
-      margin-bottom: 1rem;
-    }
-
-    :host ::ng-deep {
-      .prose pre {
-        background-color: rgb(243, 244, 246);
-        padding: 1rem;
-        border-radius: 0.375rem;
-        margin: 0.5rem 0;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-      }
-
-      .prose code {
-        font-family: ui-monospace, monospace;
-        font-size: 0.875em;
-        color: rgb(31, 41, 55);
-        padding: 0.2em 0.4em;
-        background-color: rgba(0, 0, 0, 0.05);
-        border-radius: 3px;
-      }
-
-      .prose pre code {
-        padding: 0;
-        background-color: transparent;
-        border-radius: 0;
-      }
-    }
-  `]
+  templateUrl: './message.component.html',
+  styleUrls: ['./message.component.css'],
 })
 export class MessageComponent {
   @Input() message!: Discussion;
+  hasCodeBlock = false;
+  isCopied = false;
   
   constructor(private sanitizer: DomSanitizer) {}
 
@@ -63,42 +22,110 @@ export class MessageComponent {
     return this.message.message.startsWith('User:');
   }
 
-  get messageClasses(): string {
-    return `flex ${this.isUser ? 'justify-end' : 'justify-start'}`;
+  get messageContainerClasses(): string {
+    return this.isUser ? 'justify-end' : 'justify-start';
   }
 
-  get bubbleClasses(): string {
-    return `${
+  get messageBubbleClasses(): string {
+    return `max-w-[85%] lg:max-w-[75%] rounded-lg px-4 py-3 shadow-sm ${
       this.isUser 
-        ? 'bg-blue-600 text-white' 
-        : 'bg-white shadow'
-    } rounded-lg px-4 py-2 max-w-[80%]`;
+        ? 'bg-[#233349] text-white' 
+        : 'bg-white border border-gray-100'
+    }`;
   }
 
   get senderClasses(): string {
-    return `text-sm ${
+    return `flex items-center justify-between gap-2 mb-1 ${
       this.isUser 
         ? 'text-blue-200' 
         : 'text-gray-500'
-    } mb-1`;
+    }`;
+  }
+
+  get contentClasses(): string {
+    return this.isUser 
+      ? 'prose-invert prose-pre:bg-blue-700 prose-code:text-blue-200' 
+      : 'prose-gray prose-pre:bg-gray-800 prose-pre:text-gray-100';
   }
 
   get formattedMessage(): SafeHtml {
-    let text = this.message.message;
-    text = text.replace(/^(User:|Assistant:)\s*/, '');
-    const formatted = this.formatMessage(text);
+    let text = this.message.message.replace(/^(User:|Assistant:)\s*/, '');
+    const formatted = this.formatMessageContent(text);
     return this.sanitizer.sanitize(SecurityContext.HTML, formatted) ?? '';
   }
 
-  private formatMessage(text: string): string {
+  private formatMessageContent(text: string): string {
     if (!text) return '';
-    
-    // Handle code blocks
-    text = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-    
-    // Handle line breaks
+  
+    // Check for code blocks
+    this.hasCodeBlock = text.includes('```');
+  
+    // Format code blocks with syntax highlighting
+    text = text.replace(/```(\w+)?\n([\s\S]*?)```/g, (_, lang, code) => {
+      const language = lang || 'plaintext';
+      return `<pre><code class="language-${language}">${this.escapeHtml(code.trim())}</code></pre>`;
+    });
+  
+    // Format inline code
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+  
+    // Format bold text
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  
+    // Format italic text
+    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  
+    // Format lists
+    text = text.replace(/^\s*[-*]\s+(.+)$/gm, '<li>$1</li>');
+    text = text.replace(/(<li>.*?<\/li>\n?)+/g, '<ul>$&</ul>');
+  
+    // Format tables
+    text = text.replace(
+      /\n\|(.+?)\|(?:\n\|[-\s:]+\|)?\n((?:\|.+\|(?:\n|$))+)/g,
+      (_, header, rows) => {
+        const headerHtml = `<tr>${header
+          .split('|')
+          .map((cell: string) => `<th>${cell.trim()}</th>`)
+          .join('')}</tr>`;
+        const rowsHtml = rows
+          .trim()
+          .split('\n')
+          .map((row: string) =>
+            `<tr>${row
+              .split('|')
+              .map((cell: string) => `<td>${cell.trim()}</td>`)
+              .join('')}</tr>`
+          )
+          .join('');
+        return `<table>${headerHtml}${rowsHtml}</table>`;
+      }
+    );
+  
+    // Format line breaks
+    text = text.replace(/\n\n/g, '</p><p>');
     text = text.replace(/\n/g, '<br>');
-    
+  
+    // Wrap in paragraphs if not already wrapped
+    if (!text.startsWith('<')) {
+      text = `<p>${text}</p>`;
+    }
+  
     return text;
+  }  
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  async copyCode(code: string) {
+    try {
+      await navigator.clipboard.writeText(code);
+      this.isCopied = true;
+      setTimeout(() => this.isCopied = false, 2000); // Reset after 2s
+    } catch (err) {
+      console.error('Failed to copy code:', err);
+    }
   }
 }

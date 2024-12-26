@@ -1,1 +1,53 @@
-<p>message works!</p>
+<div 
+    class="message-container"
+    [ngClass]="messageContainerClasses"
+    [attr.data-sender]="isUser ? 'user' : 'assistant'"
+>
+    <!-- Avatar -->
+    <div class="flex-shrink-0 w-8 h-8" [class.order-2]="isUser">
+    <div class="w-8 h-8 rounded-full flex items-center justify-center"
+            [ngClass]="isUser ? 'bg-gray-100' : 'bg-gray-100'">
+        <!-- User Icon -->
+        <svg *ngIf="isUser" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+        <path d="M480-480q81 0 169-16.5T800-540v400q-60 27-146 43.5T480-80q-88 0-174-16.5T160-140v-400q63 27 151 43.5T480-480Zm240 280v-230q-50 14-115.5 22T480-400q-59 0-124.5-8T240-430v230q50 18 115 29t125 11q60 0 125-11t115-29ZM480-880q66 0 113 47t47 113q0 66-47 113t-113 47q-66 0-113-47t-47-113q0-66 47-113t113-47Zm0 240q33 0 56.5-23.5T560-720q0-33-23.5-56.5T480-800q-33 0-56.5 23.5T400-720q0 33 23.5 56.5T480-640Zm0-80Zm0 425Z"/>
+        </svg>
+        
+        <!-- Professional Assistant Bot Icon -->
+        <svg *ngIf="!isUser" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+        <path d="M160-120v-200q0-33 23.5-56.5T240-400h480q33 0 56.5 23.5T800-320v200H160Zm200-320q-83 0-141.5-58.5T160-640q0-83 58.5-141.5T360-840h240q83 0 141.5 58.5T800-640q0 83-58.5 141.5T600-440H360ZM240-200h480v-120H240v120Zm120-320h240q50 0 85-35t35-85q0-50-35-85t-85-35H360q-50 0-85 35t-35 85q0 50 35 85t85 35Zm0-80q17 0 28.5-11.5T400-640q0-17-11.5-28.5T360-680q-17 0-28.5 11.5T320-640q0 17 11.5 28.5T360-600Zm240 0q17 0 28.5-11.5T640-640q0-17-11.5-28.5T600-680q-17 0-28.5 11.5T560-640q0 17 11.5 28.5T600-600ZM480-200Zm0-440Z"/>
+        </svg>
+    </div>
+    </div>
+
+    <!-- Message Content -->
+    <div [class]="messageBubbleClasses">
+    <!-- Sender Info -->
+    <div [class]="senderClasses">
+        <span class="text-sm font-medium">{{ isUser ? 'You' : 'AI Assistant' }}</span>
+        <span class="text-xs opacity-75">{{ message.createdAt | date:'MMM d, h:mm a' }}</span>
+    </div>
+
+    <!-- Message Content -->
+    <div 
+        class="message-content prose prose-sm max-w-none"
+        [ngClass]="contentClasses"
+        [innerHTML]="formattedMessage"
+    ></div>
+
+    <!-- Code Blocks (if any) -->
+    <div *ngIf="!isUser" class="mt-2 flex justify-end items-center gap-2 text-xs opacity-75">
+    <button 
+        (click)="copyCode(message.message)"
+        class="flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 transition-colors"
+        [class.text-green-600]="isCopied">
+        <svg *ngIf="!isCopied" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+        </svg>
+        <svg *ngIf="isCopied" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <span>{{ isCopied ? 'Copied!' : 'Copy code' }}</span>
+    </button>
+    </div>
+    </div>
+</div>

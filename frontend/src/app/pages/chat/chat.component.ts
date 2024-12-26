@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, HostListener, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RepoDialogComponent } from '../../components/repo-dialog/repo-dialog.component';
@@ -9,6 +9,7 @@ import { SpaceDialogComponent } from '../../components/space-dialog/space-dialog
 import { HeaderComponent } from '../../components/header/header.component';
 import { MessageComponent } from '../../components/message/message.component';
 import { Router } from '@angular/router';
+import { SidebarComponent } from '../../components/sidebar/sidebar.component';
 
 @Component({
   selector: 'app-chat',
@@ -19,12 +20,14 @@ import { Router } from '@angular/router';
     HeaderComponent,
     RepoDialogComponent,
     SpaceDialogComponent,
-    MessageComponent
+    MessageComponent,
+    SidebarComponent
   ],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css'],
 })
 export class ChatComponent implements OnInit {
+  @Input() isSidebarOpen: boolean = true;
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
 
   spaces: Space[] = [];
@@ -39,6 +42,7 @@ export class ChatComponent implements OnInit {
   isAtBottom = true;
   groupedSpaces: Map<string, Space[]> = new Map();
   isAnalyzing = false;
+  @ViewChild('messageTextarea') messageTextarea!: ElementRef;
 
   constructor(
     private spaceService: SpaceService,
@@ -116,7 +120,15 @@ export class ChatComponent implements OnInit {
     this.loadProcessedCode(space.id);
   }
 
+  resetTextarea(): void {
+    if (this.messageTextarea?.nativeElement) {
+      this.messageTextarea.nativeElement.style.height = '150px'; 
+    }
+  }
+
   sendMessage() {
+    if (!this.message.trim() || !this.currentSpace || this.isLoading) return;
+
     if (!this.currentSpace) {
       this.errorMessage = 'Please select a space first';
       return;
@@ -131,6 +143,7 @@ export class ChatComponent implements OnInit {
     // Store the message temporarily
     const tempMessage = this.message;
     this.message = ''; // Clear input immediately
+    this.resetTextarea(); // Reset textarea height after clearing
 
     this.spaceService.sendMessage(this.currentSpace.id, messageText).subscribe({
       next: () => {
@@ -142,6 +155,9 @@ export class ChatComponent implements OnInit {
         console.error('Error sending message:', error);
         this.errorMessage = 'Failed to send message';
         this.message = tempMessage; // Restore message if failed
+        if (this.messageTextarea?.nativeElement) {
+          this.autoGrow({ target: this.messageTextarea.nativeElement }); // Re-adjust height if message is restored
+        }
       }
     });
   }
@@ -269,8 +285,10 @@ export class ChatComponent implements OnInit {
     if (!this.messagesContainer) return;
     
     const container = this.messagesContainer.nativeElement;
-    const threshold = 20; 
-    const position = container.scrollHeight - container.scrollTop - container.clientHeight;
+    const threshold = 100; // Increased threshold for better detection
+    const position = Math.abs(
+      (container.scrollHeight - container.scrollTop) - container.clientHeight
+    );
     this.isAtBottom = position < threshold;
   }
 
@@ -282,5 +300,18 @@ export class ChatComponent implements OnInit {
       top: container.scrollHeight,
       behavior: 'smooth'
     });
+  }
+
+  autoGrow(event: any): void {
+    const textarea = event.target as HTMLTextAreaElement;
+    textarea.style.height = '0px';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  }
+  
+  handleEnterKey(event: KeyboardEvent) {
+    if (!event.shiftKey) {
+      event.preventDefault();
+      this.sendMessage();
+    }
   }
 }

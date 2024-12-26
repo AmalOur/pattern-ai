@@ -1,23 +1,89 @@
-.dialog-overlay {
-  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
+/* Modal Background */
+.fixed.bg-gray-500 {
+  background-color: rgba(31, 41, 55, 0.75); /* A more refined gray color with opacity */
 }
 
-.dialog-content {
-  @apply bg-white rounded-lg shadow-xl w-full max-w-md p-6;
+/* Modal Container */
+.bg-white.rounded-lg {
+  background-color: #ffffff;
+  border-radius: 0.5rem; /* Rounded corners */
+  padding: 2rem; /* Adequate padding for the modal */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Soft shadow for a floating effect */
+  max-width: 32rem; /* Control modal width */
+  width: 100%; /* Ensures the modal takes full width up to max-width */
 }
 
-.form-group {
-  @apply space-y-2 mb-4;
+/* Title */
+.text-2xl.font-semibold {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2d3748; /* Dark gray for the title text */
+  margin-bottom: 1.5rem; /* Spacing below title */
 }
 
-.form-label {
-  @apply block text-sm font-medium text-gray-700;
+/* Form Inputs */
+input[type="text"], input[type="password"] {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid #e2e8f0; /* Light gray border */
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
-.form-input {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+/* Button Styling */
+button {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  transition: background-color 0.3s, box-shadow 0.3s;
 }
 
-.button-group {
-  @apply flex justify-end space-x-3 mt-6;
+/* Cancel Button */
+button[type="button"] {
+  background-color: white;
+  color: #4a5568; /* Dark gray */
+  border: 1px solid #e2e8f0; /* Border similar to input fields */
+  cursor: pointer;
+}
+
+/* Button Group */
+.mt-8.flex.justify-end {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+/* Space between form inputs */
+.space-y-6 > div {
+  margin-bottom: 1.5rem; /* Space between form fields */
+}
+
+.fixed {
+  opacity: 0;
+  animation: fadeIn 0.3s forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+.bg-white {
+  transform: scale(0.95);
+  animation: scaleIn 0.3s forwards;
+}
+
+@keyframes scaleIn {
+  to {
+    transform: scale(1);
+  }
+}
+
+button {
+  width: calc(100% - 1rem); /* Ensure buttons have the same width as input */
 }

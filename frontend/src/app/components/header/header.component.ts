@@ -12,6 +12,7 @@ import { Space } from '../../models/space.model';
   styleUrls: ['./header.component.css']
 })
 export class HeaderComponent {
+  @Input() isSidebarOpen: boolean = true;
   @Input() currentSpace?: Space;
   @Input() processedCode: any[] = [];
   @Output() deleteSpaceEvent = new EventEmitter<void>();

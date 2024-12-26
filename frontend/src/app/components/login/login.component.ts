@@ -15,9 +15,9 @@ import { MessageComponent } from "../shared/message.component";
 })
 export class LoginComponent {
   loginForm: FormGroup;
-  isLoading = false;
-  errorMessage= '';
-  successMessage='';
+  errorMessage: string = '';
+  successMessage: string = '';
+  isLoading: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -32,34 +32,38 @@ export class LoginComponent {
 
   onSubmit() {
     if (this.loginForm.valid) {
-      this.isLoading = true;
+      // Reset messages and set loading state
       this.errorMessage = '';
       this.successMessage = '';
+      this.isLoading = true;
 
       this.authService.login(this.loginForm.value).subscribe({
         next: (response) => {
-          this.isLoading = false;
           if (response.token) {
             this.successMessage = 'Login successful!';
-            this.router.navigate(['/chat']);
+            // Ensure navigation happens after token is stored
+            setTimeout(() => {
+              this.router.navigate(['/chat']);
+            }, 100);
           } else {
             this.errorMessage = response.message || 'Login failed';
           }
         },
         error: (error) => {
-          this.isLoading = false;
           if (error.status === 401) {
             this.errorMessage = 'Invalid email or password';
           } else {
             this.errorMessage = error.error?.message || 'An error occurred during login';
           }
           console.error('Login error:', error);
+        },
+        complete: () => {
+          this.isLoading = false;
         }
       });
     }
   }
 
-  // Handle login error (show message to user)
   goToSignup() {
     this.router.navigate(['/signup']);
   }

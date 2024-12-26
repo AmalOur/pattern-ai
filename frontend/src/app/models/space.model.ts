@@ -2,6 +2,7 @@ export interface Space {
   id: string;
   name: string;
   createdAt: Date;
+  isMenuOpen?: boolean;
 }
 
 export interface Discussion {
