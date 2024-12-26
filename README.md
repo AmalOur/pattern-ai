@@ -165,11 +165,19 @@ To test the APIs:
 
 The full API specification is also available in JSON format at `/v3/api-docs` and in YAML format at `/v3/api-docs.yaml`.
 
-## Contributing
+# Video Demonstration
+
+Explore the functionality in action through the demonstration video provided below:
+
+https://github.com/user-attachments/assets/e25bb8a4-d229-4ac5-92c8-7fcc908b6c78
+
+
+
+# Contributing
 
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for more details.
 
-### Contributors
+## Contributors
 - OURAJIM Amal ([GitHub](https://github.com/amalour))
 - ABID Hanane ([GitHub](https://github.com/hananabid24))
 - FARKHANE Salma ([GitHub](https://github.com/salmafar))
