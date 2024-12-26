@@ -1,6 +1,6 @@
 # Pattern AI - Design Pattern Analysis and Recommendation Platform
 
-![alt text](/frontend/src/assets/logo_b.png)
+![alt text](/frontend/src/assets/logo.png)
 
 Pattern AI is an intelligent platform that analyzes codebases to identify design patterns, suggest improvements, and provide statistical insights about code quality. It combines AI-powered analysis with design pattern expertise to help developers write better, more maintainable code.
 
