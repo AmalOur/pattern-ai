@@ -1,7 +1,10 @@
 package ma.projet.patternai.controller;
 
+import ma.projet.patternai.entities.DesignPatternRecommendation;
 import ma.projet.patternai.entities.LangchainCollection;
 import ma.projet.patternai.entities.Space;
+import ma.projet.patternai.requests.CodeAnalysisRequest;
+import ma.projet.patternai.service.DesignPatternRecommendationService;
 import ma.projet.patternai.service.ProcessedCodeService;
 import ma.projet.patternai.service.SpaceService;
 import org.slf4j.Logger;
@@ -12,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -24,6 +28,9 @@ public class SpaceController {
 
     @Autowired
     private ProcessedCodeService processedCodeService;
+
+    @Autowired
+    private DesignPatternRecommendationService recommendationService;
 
     @GetMapping
     public ResponseEntity<List<Space>> getUserSpaces(Authentication auth) {
@@ -78,6 +85,23 @@ public class SpaceController {
         } catch (Exception e) {
             logger.error("Error deleting processed code: ", e);
             return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/{spaceId}/analyze")
+    public ResponseEntity<?> analyzeCode(
+            @PathVariable UUID spaceId,
+            @RequestBody CodeAnalysisRequest request,
+            Authentication auth
+    ) {
+        try {
+            List<DesignPatternRecommendation> recommendations =
+                    recommendationService.analyzeAndStoreCode(spaceId, request, auth.getName());
+            return ResponseEntity.ok(recommendations);
+        } catch (Exception e) {
+            logger.error("Error analyzing code: ", e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 }

@@ -45,9 +45,26 @@ public class OpenAIClient {
             requestBody.put("messages", Arrays.asList(
                     Map.of(
                             "role", "system",
-                            "content", "You are a design pattern expert. Provide clear, concise, and contextually appropriate responses. " +
-                                    "If the user greets you, welcome them and ask how you can help with design patterns. " +
-                                    "Keep responses focused on what was specifically asked."
+                            "content", """
+            You are a design pattern expert specialized in analyzing 
+            and improving software architectural quality. Your role is to:
+            
+            1. Identify recurring issues in the code (high coupling, 
+               duplication, lack of flexibility)
+            2. Recommend appropriate design patterns with detailed 
+               contextual explanations
+            3. Provide practical and context-adapted implementation guidance
+            4. Evaluate potential impact on code quality
+            
+            Your responses must be:
+            - Precise and context-specific
+            - Focused on practical code improvement
+            - Accompanied by concrete implementation examples
+            - Targeted at solving identified problems
+            
+            If the user greets you, welcome them and ask how you can 
+            help with design patterns.
+            """
                     ),
                     Map.of("role", "user", "content", prompt)
             ));

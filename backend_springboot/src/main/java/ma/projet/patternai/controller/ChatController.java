@@ -34,151 +34,6 @@ public class ChatController {
     @Autowired
     private LangchainService langchainService;
 
-//    private String buildPromptWithContext(UUID spaceId, String userQuery, String userEmail) {
-//        StringBuilder promptBuilder = new StringBuilder();
-//        promptBuilder.append("You are a design pattern expert. ")
-//                .append("Provide clear, concise, and contextually appropriate responses. ");
-//
-//        // Add previous discussions
-//        List<String> previousDiscussions = discussionService.getPreviousDiscussions(spaceId, userEmail);
-//        if (!previousDiscussions.isEmpty()) {
-//            promptBuilder.append("\n\nPrevious conversation:\n");
-//            previousDiscussions.stream()
-//                    .limit(5)
-//                    .forEach(msg -> promptBuilder.append(msg).append("\n"));
-//        }
-//
-//        // Get code from langchain database
-//        List<Map<String, Object>> processedCodes = langchainService.getSpaceCodeContent(spaceId, userEmail);
-//        if (!processedCodes.isEmpty()) {
-//            promptBuilder.append("\nAnalyzing code from the following repositories:\n");
-//            for (Map<String, Object> code : processedCodes) {
-//                String codeContent = (String) code.get("code_content");
-//                if (codeContent != null && !codeContent.trim().isEmpty()) {
-//                    promptBuilder.append("\nRepository: ")
-//                            .append(code.get("repo_url"))
-//                            .append("\n```\n")
-//                            .append(codeContent)
-//                            .append("\n```\n");
-//                }
-//            }
-//        }
-//
-//        // Add code from current query if present
-//        String codeFromQuery = extractCodeFromQuery(userQuery);
-//        if (codeFromQuery != null) {
-//            promptBuilder.append("\nAdditional code provided for analysis:\n```\n")
-//                    .append(codeFromQuery)
-//                    .append("\n```\n");
-//        }
-//
-//        // Add current query
-//        promptBuilder.append("\nCurrent query: ").append(userQuery).append("\n\n");
-//
-//        // Add specific instructions
-//        if (processedCodes.isEmpty() && codeFromQuery == null) {
-//            // No code context, handle as general design pattern question
-//            if (isGreeting(userQuery)) {
-//                promptBuilder.append("Welcome the user and offer guidance about design patterns.");
-//            } else if (containsPatternName(userQuery)) {
-//                promptBuilder.append("Explain the mentioned design pattern with practical examples and use cases.");
-//            } else {
-//                promptBuilder.append("Provide a clear, focused response about design patterns, ")
-//                        .append("addressing the specific question or topic.");
-//            }
-//        } else {
-//            // Code context available
-//            promptBuilder.append("Please analyze the provided code and:\n")
-//                    .append("1. Identify existing design patterns if any\n")
-//                    .append("2. Recommend appropriate design patterns that could improve the code\n")
-//                    .append("3. Explain how each recommended pattern would benefit this specific code\n")
-//                    .append("4. Provide specific examples of how to refactor the code using these patterns\n")
-//                    .append("5. Point out any potential architectural improvements\n");
-//        }
-//
-//        logger.info("Generated prompt with {} processed code repositories", processedCodes.size());
-//        return promptBuilder.toString();
-//    }
-
-    private String buildPromptWithContext(UUID spaceId, String userQuery, String userEmail) {
-        StringBuilder promptBuilder = new StringBuilder();
-        logger.debug("Building prompt for space {} and user {}", spaceId, userEmail);
-
-        // Get code content first
-        List<Map<String, Object>> processedCodes = langchainService.getSpaceCodeContent(spaceId, userEmail);
-        boolean hasValidCode = false;
-
-        if (!processedCodes.isEmpty()) {
-            promptBuilder.append("You are analyzing a codebase with the following content:\n\n");
-
-            for (Map<String, Object> codeFile : processedCodes) {
-                String codeContent = (String) codeFile.get("code_content");
-                String repoUrl = (String) codeFile.get("repo_url");
-
-                if (codeContent != null && !codeContent.trim().isEmpty()) {
-                    hasValidCode = true;
-                    promptBuilder.append("Repository: ").append(repoUrl).append("\n")
-                            .append("Code Content:\n```\n")
-                            .append(codeContent.trim())
-                            .append("\n```\n\n");
-
-                    logger.debug("Added code from repo {} to prompt", repoUrl);
-                }
-            }
-
-            // Add specific instructions for code analysis
-            promptBuilder.append("\nPlease analyze the above code and:\n")
-                    .append("1. Identify any design patterns currently in use\n")
-                    .append("2. Suggest appropriate design patterns that could improve the code\n")
-                    .append("3. Explain how each suggested pattern would benefit this specific code\n")
-                    .append("4. Provide implementation guidance for the suggested patterns\n\n");
-        }
-
-        // Add previous discussions for context
-        List<String> previousDiscussions = discussionService.getPreviousDiscussions(spaceId, userEmail);
-        if (!previousDiscussions.isEmpty()) {
-            promptBuilder.append("\nPrevious conversation context:\n");
-            previousDiscussions.stream()
-                    .limit(5)
-                    .forEach(msg -> promptBuilder.append(msg).append("\n"));
-        }
-
-        // Add current query
-        promptBuilder.append("\nCurrent query: ").append(userQuery);
-
-        String finalPrompt = promptBuilder.toString();
-        logger.debug("Generated prompt with code: {}, length: {}", hasValidCode, finalPrompt.length());
-        return finalPrompt;
-    }
-
-    private boolean isCodeAnalysisQuery(String query) {
-        String lowerQuery = query.toLowerCase();
-        return lowerQuery.contains("explain") ||
-                lowerQuery.contains("analyze") ||
-                lowerQuery.contains("recommend") ||
-                lowerQuery.contains("suggest") ||
-                lowerQuery.contains("improve") ||
-                lowerQuery.contains("pattern") ||
-                lowerQuery.contains("review") ||
-                lowerQuery.contains("code");
-    }
-
-    private void addQuerySpecificInstructions(StringBuilder promptBuilder, String userQuery,
-                                              String codeFromQuery, boolean hasProcessedCode) {
-        if (codeFromQuery != null || hasProcessedCode) {
-            promptBuilder.append("Analyze the code and provide specific design pattern recommendations. ")
-                    .append("Focus on improving code structure and maintainability. ")
-                    .append("Explain the benefits of each suggested pattern.");
-        } else if (isGreeting(userQuery)) {
-            promptBuilder.append("Welcome the user and offer guidance about design patterns.");
-        } else if (containsPatternName(userQuery)) {
-            promptBuilder.append("Explain the mentioned design pattern with practical examples and use cases.");
-        } else {
-            promptBuilder.append("Provide a clear, focused response about design patterns, ")
-                    .append("addressing the specific question or topic.");
-        }
-    }
-
     @GetMapping("/history")
     public ResponseEntity<List<Discussion>> getChatHistory(
             @PathVariable UUID spaceId,
@@ -255,32 +110,72 @@ public class ChatController {
         }
     }
 
-    private String extractCodeFromQuery(String query) {
-        var matcher = CODE_BLOCK_PATTERN.matcher(query);
-        return matcher.find() ? matcher.group(1).trim() : null;
-    }
+    private String buildPromptWithContext(UUID spaceId, String userQuery, String userEmail) {
+        StringBuilder promptBuilder = new StringBuilder();
+        logger.debug("Building prompt for space {} and user {}", spaceId, userEmail);
 
-    private boolean isGreeting(String query) {
-        query = query.toLowerCase().trim();
-        return query.matches(".*(hi|hello|hey|greetings|good morning|good afternoon|good evening).*")
-                && query.length() < 20;
-    }
+        // Get code content first
+        List<Map<String, Object>> processedCodes = langchainService.getSpaceCodeContent(spaceId, userEmail);
+        boolean hasValidCode = false;
 
-    private boolean containsPatternName(String query) {
-        query = query.toLowerCase();
-        String[] patterns = {
-                "singleton", "factory", "abstract factory", "builder", "prototype",
-                "adapter", "bridge", "composite", "decorator", "facade",
-                "flyweight", "proxy", "chain of responsibility", "command",
-                "interpreter", "iterator", "mediator", "memento", "observer",
-                "state", "strategy", "template method", "visitor"
-        };
+        if (!processedCodes.isEmpty()) {
+            promptBuilder.append("You are analyzing a codebase with the following content:\n\n");
 
-        for (String pattern : patterns) {
-            if (query.contains(pattern)) {
-                return true;
+            for (Map<String, Object> codeFile : processedCodes) {
+                String codeContent = (String) codeFile.get("code_content");
+                String repoUrl = (String) codeFile.get("repo_url");
+
+                if (codeContent != null && !codeContent.trim().isEmpty()) {
+                    hasValidCode = true;
+                    promptBuilder.append("Repository: ").append(repoUrl).append("\n")
+                            .append("Code Content:\n```\n")
+                            .append(codeContent.trim())
+                            .append("\n```\n\n");
+
+                    logger.debug("Added code from repo {} to prompt", repoUrl);
+                }
             }
+
+            // Enhanced analysis instructions
+            promptBuilder.append("\nAnalyze the code structure and provide a detailed report in the following format:\n\n")
+                    .append("1. CODE STATISTICS:\n")
+                    .append("   - Total classes and interfaces\n")
+                    .append("   - Average methods per class\n")
+                    .append("   - Lines of code (approximate)\n")
+                    .append("   - Dependency count\n\n")
+                    .append("2. CODE QUALITY METRICS:\n")
+                    .append("   - Coupling level (High/Medium/Low)\n")
+                    .append("   - Code duplication assessment\n")
+                    .append("   - Class cohesion analysis\n")
+                    .append("   - Dependency management evaluation\n\n")
+                    .append("3. DESIGN PATTERNS:\n")
+                    .append("   - Currently implemented patterns\n")
+                    .append("   - Recommended patterns with justification\n")
+                    .append("   - Implementation priority (High/Medium/Low)\n\n")
+                    .append("4. ARCHITECTURAL RECOMMENDATIONS:\n")
+                    .append("   - Current architecture overview\n")
+                    .append("   - Suggested improvements\n")
+                    .append("   - Refactoring priorities\n\n")
+                    .append("5. OPTIMIZATION OPPORTUNITIES:\n")
+                    .append("   - Performance bottlenecks\n")
+                    .append("   - Resource usage efficiency\n")
+                    .append("   - Scalability considerations\n\n");
         }
-        return false;
+
+        // Add previous discussions for context
+        List<String> previousDiscussions = discussionService.getPreviousDiscussions(spaceId, userEmail);
+        if (!previousDiscussions.isEmpty()) {
+            promptBuilder.append("\nPrevious conversation context:\n");
+            previousDiscussions.stream()
+                    .limit(5)
+                    .forEach(msg -> promptBuilder.append(msg).append("\n"));
+        }
+
+        // Add current query
+        promptBuilder.append("\nCurrent query: ").append(userQuery);
+
+        String finalPrompt = promptBuilder.toString();
+        logger.debug("Generated prompt with code: {}, length: {}", hasValidCode, finalPrompt.length());
+        return finalPrompt;
     }
 }

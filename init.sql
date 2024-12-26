@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS discussions (
     message TEXT,
     created_at TIMESTAMP NOT NULL,
     space_id UUID NOT NULL REFERENCES spaces(id) ON DELETE CASCADE,
-    message_type VARCHAR(20) NOT NULL -- 'CHAT' or 'CODE_ANALYSIS'
+    message_type VARCHAR(20) NOT NULL 
 );
 
 -- Update langchain tables schema with space_id and repo_url

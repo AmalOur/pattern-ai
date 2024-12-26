@@ -107,32 +107,42 @@ public class DesignPatternRecommendationService {
 
     private String generateAnalysisPrompt(String codeContent) {
         return String.format("""
-            Act as an expert software architect specializing in design patterns. 
-            Analyze this code and recommend appropriate design patterns:
-            
-            ```
-            %s
-            ```
-            
-            Please provide your recommendations in this exact format:
-            PatternName | Detailed explanation of how it improves this specific code | Confidence (0-1)
-            
-            Focus on:
-            1. The patterns that would most benefit this code
-            2. Code structure and relationships
-            3. Maintainability and extensibility
-            4. Current architecture and potential improvements
-            5. Specific implementation details
-            
-            Limit to the 5 most relevant patterns. Be specific about how each pattern 
-            would improve THIS code, not just general pattern descriptions.
-            
-            For each pattern, explain:
-            - Why this pattern is appropriate for this specific code
-            - How to implement it in this context
-            - What specific problems it solves
-            - Expected benefits after implementation
-            """, codeContent);
+        As a software architecture expert specializing in design patterns,
+        analyze this code focusing on common development issues
+        and recommend appropriate design patterns:
+        
+        ```
+        %s
+        ```
+        
+        Provide your recommendations in this exact format:
+        PatternName | Detailed explanation of improvement for this specific code | Confidence (0-1)
+        
+        Focus on:
+        1. Current Issue Identification:
+           - High coupling
+           - Code duplication
+           - Lack of flexibility
+           - Maintenance difficulties
+        
+        2. For each identified issue:
+           - The most suitable design pattern
+           - How it specifically solves the problem
+           - Concrete benefits for maintainability
+           - Implementation steps in this context
+        
+        3. Impact Assessment:
+           - Architectural quality improvement
+           - Technical debt reduction
+           - Future maintenance ease
+           - Code scalability
+        
+        Limit to the 5 most relevant patterns. For each pattern, detail:
+        - The specific problem in the current code
+        - The proposed solution with the pattern
+        - Concrete implementation steps
+        - Measurable benefits after implementation
+        """, codeContent);
     }
 
     private List<DesignPatternRecommendation> parseRecommendations(String aiResponse) {
@@ -168,50 +178,5 @@ public class DesignPatternRecommendationService {
                 .sorted(Comparator.comparingDouble(DesignPatternRecommendation::getConfidenceScore).reversed())
                 .limit(5)
                 .collect(Collectors.toList());
-    }
-
-    public Map<String, Object> getDetailedAnalysis(String codeContent) {
-        try {
-            String detailedPrompt = String.format("""
-                Perform a detailed design pattern analysis of this code:
-                
-                ```
-                %s
-                ```
-                
-                Provide your analysis in these sections:
-                1. Identified Patterns (format: PatternName | Justification | ConfidenceScore)
-                2. Code Structure Analysis:
-                   - Architecture overview
-                   - Component relationships
-                   - Design strengths and weaknesses
-                3. Improvement Recommendations:
-                   - Pattern implementation suggestions
-                   - Code restructuring recommendations
-                   - Best practices to adopt
-                4. Implementation Guidelines:
-                   - Step-by-step refactoring suggestions
-                   - Code examples where appropriate
-                5. Related Patterns:
-                   - Alternative patterns to consider
-                   - Complementary patterns
-                
-                Focus on practical, implementation-specific recommendations that 
-                directly relate to the provided code.
-                """, codeContent);
-
-            Map<String, Object> aiResponse = openAiClient.generateCompletion(detailedPrompt);
-
-            Map<String, Object> analysis = new HashMap<>();
-            analysis.put("recommendations", parseRecommendations((String) aiResponse.get("full_response")));
-            analysis.put("detailed_explanation", aiResponse.get("full_response"));
-            analysis.put("model_info", aiResponse.get("model"));
-            analysis.put("token_usage", aiResponse.get("usage"));
-
-            return analysis;
-        } catch (Exception e) {
-            logger.error("Error getting detailed analysis: ", e);
-            throw new RuntimeException("Failed to generate detailed analysis: " + e.getMessage());
-        }
     }
 }
