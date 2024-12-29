@@ -163,8 +163,6 @@ To test the APIs:
 3. Explore the available endpoints
 4. Use the "Try it out" feature to make real API calls
 
-The full API specification is also available in JSON format at `/v3/api-docs` and in YAML format at `/v3/api-docs.yaml`.
-
 # Video Demonstration
 
 Explore the functionality in action through the demonstration video provided below:
