@@ -1,6 +1,6 @@
 # Pattern AI - Design Pattern Analysis and Recommendation Platform
 
-![alt text](/frontend/src/assets/logo_b.png)
+![alt text](/frontend/src/assets/logo.png)
 
 Pattern AI is an intelligent platform that analyzes codebases to identify design patterns, suggest improvements, and provide statistical insights about code quality. It combines AI-powered analysis with design pattern expertise to help developers write better, more maintainable code.
 
@@ -165,11 +165,19 @@ To test the APIs:
 
 The full API specification is also available in JSON format at `/v3/api-docs` and in YAML format at `/v3/api-docs.yaml`.
 
-## Contributing
+# Video Demonstration
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for more details.
+Explore the functionality in action through the demonstration video provided below:
 
-### Contributors
+https://github.com/user-attachments/assets/06d79b46-8d06-4ea1-b4ce-8433aaccd86a
+
+
+
+# Contributing
+
+We appreciate your contributions! Feel free to share your ideas, suggestions, or improvements to help make this project even better.
+
+## Contributors
 - OURAJIM Amal ([GitHub](https://github.com/amalour))
 - ABID Hanane ([GitHub](https://github.com/hananabid24))
 - FARKHANE Salma ([GitHub](https://github.com/salmafar))
