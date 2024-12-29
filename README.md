@@ -169,13 +169,13 @@ The full API specification is also available in JSON format at `/v3/api-docs` an
 
 Explore the functionality in action through the demonstration video provided below:
 
-https://github.com/user-attachments/assets/e25bb8a4-d229-4ac5-92c8-7fcc908b6c78
+https://github.com/user-attachments/assets/06d79b46-8d06-4ea1-b4ce-8433aaccd86a
 
 
 
 # Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for more details.
+We appreciate your contributions! Feel free to share your ideas, suggestions, or improvements to help make this project even better.
 
 ## Contributors
 - OURAJIM Amal ([GitHub](https://github.com/amalour))
