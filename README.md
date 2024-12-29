@@ -16,7 +16,8 @@ Pattern AI is an intelligent platform that analyzes codebases to identify design
 
 ## Architecture
 
-![alt text](image.png)
+![image](https://github.com/user-attachments/assets/dd92862d-a5d1-402d-96c8-dacda4d6bd4a)
+
 
 The application uses a modern microservices architecture with three main components:
 - Angular frontend for user interface
