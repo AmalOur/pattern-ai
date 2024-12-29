@@ -138,28 +138,19 @@ public class ChatController {
 
             // Enhanced analysis instructions
             promptBuilder.append("\nAnalyze the code structure and provide a detailed report in the following format:\n\n")
-                    .append("1. CODE STATISTICS:\n")
-                    .append("   - Total classes and interfaces\n")
-                    .append("   - Average methods per class\n")
-                    .append("   - Lines of code (approximate)\n")
-                    .append("   - Dependency count\n\n")
-                    .append("2. CODE QUALITY METRICS:\n")
+                    .append("1. CODE QUALITY METRICS:\n")
                     .append("   - Coupling level (High/Medium/Low)\n")
                     .append("   - Code duplication assessment\n")
                     .append("   - Class cohesion analysis\n")
                     .append("   - Dependency management evaluation\n\n")
-                    .append("3. DESIGN PATTERNS:\n")
+                    .append("2. DESIGN PATTERNS:\n")
                     .append("   - Currently implemented patterns\n")
                     .append("   - Recommended patterns with justification\n")
                     .append("   - Implementation priority (High/Medium/Low)\n\n")
-                    .append("4. ARCHITECTURAL RECOMMENDATIONS:\n")
+                    .append("3. ARCHITECTURAL RECOMMENDATIONS:\n")
                     .append("   - Current architecture overview\n")
                     .append("   - Suggested improvements\n")
-                    .append("   - Refactoring priorities\n\n")
-                    .append("5. OPTIMIZATION OPPORTUNITIES:\n")
-                    .append("   - Performance bottlenecks\n")
-                    .append("   - Resource usage efficiency\n")
-                    .append("   - Scalability considerations\n\n");
+                    .append("   - Refactoring priorities\n\n");
         }
 
         // Add previous discussions for context

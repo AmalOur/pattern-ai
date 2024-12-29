@@ -5,7 +5,32 @@
       <img src="assets/logo_b.png" alt="Pattern AI" class="p-2 w-40 h-20"/>
     </div>
   </div>
-  <div class="flex justify-between items-center mb-6 mt-10">
+
+  <!-- Model Selector -->
+  <div class="mt-4 px-2">
+    <label class="block text-sm font-medium text-gray-300 mb-2">AI Model</label>
+    <div class="relative">
+      <select
+        [ngModel]="currentModelId"
+        (ngModelChange)="onModelChange($event)"
+        [disabled]="isLoadingModels"
+        class="w-full p-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+      >
+        <option value="" disabled>Select a model</option>
+        <option *ngFor="let model of models" [value]="model.id">
+          {{ model.name }}
+        </option>
+      </select>
+      <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Spaces Section -->
+  <div class="flex justify-between items-center mb-6 mt-6">
     <h2 class="text-xl font-semibold">Spaces</h2>
     <button (click)="createNewSpace()" class="p-2 bg-gray-600 text-white rounded-full hover:bg-gray-700 transition-colors border border-gray-400">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -13,6 +38,8 @@
       </svg>
     </button>
   </div>
+
+  <!-- Spaces List -->
   <div class="flex-1 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
     <div *ngFor="let space of spaces" class="relative">
       <div 
@@ -22,18 +49,28 @@
         (click)="onSpaceSelect(space)"
       >
         <span>{{ space.name }}</span>
-        <button (click)="toggleSpaceMenu(space); $event.stopPropagation()"
-                class="p-1 hover:bg-gray-600 rounded">
+        <button 
+          (click)="toggleSpaceMenu(space); $event.stopPropagation()"
+          class="p-1 hover:bg-gray-600 rounded"
+        >
         </button>
       </div>
     </div>
   </div>
+
+  <!-- Loading Indicator for Models -->
+  <div *ngIf="isLoadingModels" class="absolute inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center">
+    <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+  </div>
+
   <!-- Logout Button -->
-    <div class="mt-4">
-      <button (click)="logout()" class="w-full p-2 bg-red-900 text-white rounded-lg hover:bg-[#661414] transition-colors border border-gray-300 flex items-center justify-center space-x-2">
-        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#ffffff"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h280v80H200Zm440-160-55-58 102-102H360v-80h327L585-622l55-58 200 200-200 200Z"/></svg>
-        <span>Logout</span>
-      </button>
+  <div class="mt-4">
+    <button (click)="logout()" class="w-full p-2 bg-red-900 text-white rounded-lg hover:bg-[#661414] transition-colors border border-gray-300 flex items-center justify-center space-x-2">
+      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#ffffff">
+        <path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h280v80H200Zm440-160-55-58 102-102H360v-80h327L585-622l55-58 200 200-200 200Z"/>
+      </svg>
+      <span>Logout</span>
+    </button>
   </div>
 </div>
 

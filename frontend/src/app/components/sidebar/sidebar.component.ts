@@ -1,16 +1,18 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Space } from '../../models/space.model';
 import { AuthService } from '../../services/auth.service';
+import { ModelService, AIModel } from '../../services/model.service';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.css']
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit {
   @Input() currentSpace: Space | null = null;
   @Input() spaces: Space[] = [];
   @Output() spaceSelected = new EventEmitter<Space>();
@@ -20,9 +22,47 @@ export class SidebarComponent {
 
   isSidebarOpen = true;
   user$;
+  models: AIModel[] = [];
+  currentModelId: string = '';
+  isLoadingModels = false;
 
-  constructor(private authService: AuthService) {
+  constructor(
+    private authService: AuthService,
+    private modelService: ModelService
+  ) {
     this.user$ = this.authService.user$;
+  }
+
+  ngOnInit() {
+    this.loadModels();
+  }
+
+  private loadModels() {
+    this.isLoadingModels = true;
+    this.modelService.getAvailableModels().subscribe({
+      next: (models) => {
+        this.models = models;
+        this.isLoadingModels = false;
+        this.modelService.getCurrentModel().subscribe({
+          next: (modelId) => this.currentModelId = modelId,
+          error: (error) => console.error('Error getting current model:', error)
+        });
+      },
+      error: (error) => {
+        console.error('Error loading models:', error);
+        this.isLoadingModels = false;
+      }
+    });
+  }
+
+  onModelChange(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    const modelId = select.value;
+    
+    this.modelService.selectModel(modelId).subscribe({
+      next: () => this.currentModelId = modelId,
+      error: (error) => console.error('Error changing model:', error)
+    });
   }
 
   toggleSidebar() {

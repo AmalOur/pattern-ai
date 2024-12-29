@@ -32,19 +32,21 @@ export class LoginComponent {
 
   onSubmit() {
     if (this.loginForm.valid) {
-      // Reset messages and set loading state
-      this.errorMessage = '';
-      this.successMessage = '';
-      this.isLoading = true;
-
       this.authService.login(this.loginForm.value).subscribe({
         next: (response) => {
           if (response.token) {
             this.successMessage = 'Login successful!';
-            // Ensure navigation happens after token is stored
-            setTimeout(() => {
-              this.router.navigate(['/chat']);
-            }, 100);
+              this.router.navigate(['/chat'], {
+                replaceUrl: true // This will replace the current URL in history
+              }).then(navigated => {
+                if (!navigated) {
+                  console.error('Navigation to /chat failed');
+                  this.errorMessage = 'Navigation failed. Please try again.';
+                }
+              }).catch(err => {
+                console.error('Navigation error:', err);
+                this.errorMessage = 'Navigation error occurred.';
+              });
           } else {
             this.errorMessage = response.message || 'Login failed';
           }
@@ -56,13 +58,14 @@ export class LoginComponent {
             this.errorMessage = error.error?.message || 'An error occurred during login';
           }
           console.error('Login error:', error);
+          this.isLoading = false;
         },
         complete: () => {
           this.isLoading = false;
         }
       });
     }
-  }
+}
 
   goToSignup() {
     this.router.navigate(['/signup']);

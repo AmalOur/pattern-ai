@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 public class DesignPatternRecommendationService {
     private static final Logger logger = LoggerFactory.getLogger(DesignPatternRecommendationService.class);
 
-    @Value("${app.python-service.url:http://localhost:8000}")
+    @Value("${python.backend.url}")
     private String pythonServiceUrl;
 
     @Autowired

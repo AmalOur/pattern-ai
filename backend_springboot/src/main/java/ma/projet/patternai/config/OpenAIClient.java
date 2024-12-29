@@ -12,24 +12,50 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Component
 public class OpenAIClient {
-
-    @Value("${spring.ai.openai.api-key}")
-    private String apiKey;
-
-    @Value("${spring.ai.openai.base-url}")
-    private String baseUrl;
-
-    @Value("${spring.ai.openai.chat.options.model}")
+    private final String apiKey;
+    private final String baseUrl;
     private String model;
+    private final double temperature;
+    private final ObjectMapper objectMapper;
+    private final AIModelConfig aiModelConfig;
 
-    @Value("${spring.ai.openai.chat.options.temperature}")
-    private double temperature;
+    public OpenAIClient(
+            @Value("${spring.ai.openai.api-key}") String apiKey,
+            @Value("${spring.ai.openai.base-url}") String baseUrl,
+            @Value("${spring.ai.openai.chat.options.model}") String model,
+            @Value("${spring.ai.openai.chat.options.temperature}") double temperature,
+            AIModelConfig aiModelConfig
+    ) {
+        this.apiKey = apiKey;
+        this.baseUrl = baseUrl;
+        this.model = model;
+        this.temperature = temperature;
+        this.aiModelConfig = aiModelConfig;
+        this.objectMapper = new ObjectMapper();
+    }
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    public void setModel(String modelId) {
+        boolean validModel = aiModelConfig.getModels().stream()
+                .anyMatch(m -> m.getId().equals(modelId));
+        if (validModel) {
+            this.model = modelId;
+        } else {
+            throw new IllegalArgumentException("Invalid model ID: " + modelId);
+        }
+    }
+
+    public List<AIModelConfig.Model> getAvailableModels() {
+        return aiModelConfig.getModels();
+    }
+
+    public String getCurrentModel() {
+        return this.model;
+    }
 
     public Map<String, Object> generateCompletion(String prompt) {
         try {
@@ -55,12 +81,6 @@ public class OpenAIClient {
                contextual explanations
             3. Provide practical and context-adapted implementation guidance
             4. Evaluate potential impact on code quality
-            
-            Your responses must be:
-            - Precise and context-specific
-            - Focused on practical code improvement
-            - Accompanied by concrete implementation examples
-            - Targeted at solving identified problems
             
             If the user greets you, welcome them and ask how you can 
             help with design patterns.

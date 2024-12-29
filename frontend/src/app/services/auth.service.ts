@@ -30,7 +30,7 @@ export interface SignupResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://springboot-backend:8080/api/auth';
+  private apiUrl = 'http://localhost:8080/api/auth';
   private userSubject = new BehaviorSubject<User | null>(null);
   user$ = this.userSubject.asObservable();
   
@@ -59,6 +59,7 @@ export class AuthService {
           if (response.token && response.user) {
             localStorage.setItem('token', response.token);
             localStorage.setItem('user', JSON.stringify(response.user));
+            this.userSubject.next(response.user);
           }
         }),
         catchError(this.handleError)
